@@ -2,6 +2,7 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mc
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import fetch from "node-fetch";
+import * as readline from 'readline';
 
 interface NpmPackage {
   name: string;
@@ -35,38 +36,56 @@ server.tool(
   { packageName: z.string() },
   async ({ packageName }) => {
     try {
+      console.log(`\nBuscando informações para o pacote: ${packageName}`);
       const response = await fetch(`https://registry.npmjs.org/${packageName}`);
       const data = (await response.json()) as NpmPackage;
       
       if (response.ok) {
+        const result = {
+          name: data.name,
+          version: data["dist-tags"].latest,
+          description: data.description,
+          author: typeof data.author === 'string' ? data.author : data.author?.name,
+          homepage: data.homepage,
+          repository: data.repository?.url,
+          dependencies: data.versions[data["dist-tags"].latest].dependencies
+        };
+
+        console.log('\nInformações do pacote:');
+        console.log('-------------------');
+        Object.entries(result).forEach(([key, value]) => {
+          if (key === 'dependencies') {
+            console.log('\nDependências:');
+            console.log(JSON.stringify(value, null, 2));
+          } else {
+            console.log(`${key}: ${value}`);
+          }
+        });
+
         return {
           content: [{
             type: "text",
-            text: JSON.stringify({
-              name: data.name,
-              version: data["dist-tags"].latest,
-              description: data.description,
-              author: data.author,
-              homepage: data.homepage,
-              repository: data.repository,
-              dependencies: data.versions[data["dist-tags"].latest].dependencies
-            }, null, 2)
+            text: JSON.stringify(result, null, 2)
           }]
         };
       } else {
+        const errorMsg = `Erro: Pacote '${packageName}' não encontrado`;
+        console.log(`\n${errorMsg}`);
         return {
           content: [{
             type: "text",
-            text: `Erro: Pacote '${packageName}' não encontrado`
+            text: errorMsg
           }]
         };
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      const errorMsg = `Erro ao buscar informações do pacote: ${errorMessage}`;
+      console.log(`\n${errorMsg}`);
       return {
         content: [{
           type: "text",
-          text: `Erro ao buscar informações do pacote: ${errorMessage}`
+          text: errorMsg
         }]
       };
     }
@@ -104,6 +123,68 @@ server.resource(
   }
 );
 
+console.log('\nServidor NPM iniciado!');
+console.log('Para buscar informações de um pacote, use: packageName = "nome-do-pacote"');
+console.log('Exemplo: packageName = "react-dom"\n');
+
 // Iniciar o servidor
 const transport = new StdioServerTransport();
-void server.connect(transport); 
+void server.connect(transport);
+
+// Função para buscar informações do pacote
+async function searchNpmPackage(packageName: string): Promise<void> {
+  try {
+    console.log(`\nBuscando informações para o pacote: ${packageName}`);
+    const response = await fetch(`https://registry.npmjs.org/${packageName}`);
+    const data = await response.json() as NpmPackage;
+    
+    if (response.ok) {
+      console.log('\nInformações do pacote:');
+      console.log('-------------------');
+      console.log(`Nome: ${data.name}`);
+      console.log(`Versão: ${data["dist-tags"].latest}`);
+      console.log(`Descrição: ${data.description}`);
+      console.log(`Autor: ${typeof data.author === 'string' ? data.author : data.author?.name}`);
+      console.log(`Homepage: ${data.homepage}`);
+      console.log(`Repositório: ${data.repository?.url}`);
+      console.log('\nDependências:');
+      console.log(JSON.stringify(data.versions[data["dist-tags"].latest].dependencies, null, 2));
+    } else {
+      console.log(`\nErro: Pacote '${packageName}' não encontrado`);
+    }
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    console.log(`\nErro ao buscar informações do pacote: ${errorMessage}`);
+  }
+}
+
+// Criar interface de linha de comando
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+// Função principal para interação com o usuário
+function startCLI() {
+  console.log('\nBem-vindo ao NPM Package Info!');
+  console.log('Digite o nome do pacote para buscar informações ou "sair" para encerrar\n');
+
+  function askPackage() {
+    rl.question('Nome do pacote: ', async (input) => {
+      if (input.toLowerCase() === 'sair') {
+        console.log('\nAté logo!');
+        rl.close();
+        process.exit(0);
+      }
+
+      await searchNpmPackage(input);
+      console.log('\n-------------------');
+      askPackage();
+    });
+  }
+
+  askPackage();
+}
+
+// Iniciar o programa
+startCLI(); 
