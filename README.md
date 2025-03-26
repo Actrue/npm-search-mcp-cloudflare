@@ -1,5 +1,7 @@
 # NPM MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@mateusribeirocampos/npm-mcp-server)](https://smithery.ai/server/@mateusribeirocampos/npm-mcp-server)
+
 This is a Model Context Protocol (MCP) server that provides functionality to fetch information about npm packages.
 
 ## Features
@@ -9,6 +11,15 @@ This is a Model Context Protocol (MCP) server that provides functionality to fet
 
 ## Installation
 
+### Installing via Smithery
+
+To install NPM MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@mateusribeirocampos/npm-mcp-server):
+
+```bash
+npx -y @smithery/cli install @mateusribeirocampos/npm-mcp-server --client claude
+```
+
+### Installing Manually
 ```bash
 npm install
 ```
