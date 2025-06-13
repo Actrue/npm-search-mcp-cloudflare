@@ -145,3 +145,6 @@ dist
 
 # Generated using ignr.py - github.com/Antrikshy/ignr.py
 
+package-lock.json
+pnpm-lock.yaml
+
