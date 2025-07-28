@@ -1,123 +1,109 @@
-# NPM MCP Server
+# NPM MCP Cloudflare Worker
 
 [![smithery badge](https://smithery.ai/badge/@mateusribeirocampos/npm-mcp-server)](https://smithery.ai/server/@mateusribeirocampos/npm-mcp-server)
 
-This is a Model Context Protocol (MCP) server that provides functionality to fetch information about npm packages.
+基于Cloudflare Workers的npm包搜索服务，提供Model Context Protocol(MCP)接口。
 
-## Features
+## 核心功能
 
-1. **Package Search**: Tool to fetch detailed information about npm packages
-2. **Popular Packages**: Resource to list the 10 most popular npm packages
+1. **包详情查询**：通过包名获取npm包详细信息
+2. **包搜索**：通过关键词搜索npm包
+3. **实时通信**：支持SSE协议实时推送数据
 
-## Installation
+## 路由端点
 
-### Installing via Smithery
+- `GET /mcp`：MCP协议主入口
+- `GET /sse`：SSE实时通信通道
 
-To install NPM MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@mateusribeirocampos/npm-mcp-server):
+## 使用示例
 
-```bash
-npx -y @smithery/cli install @mateusribeirocampos/npm-mcp-server --client claude
+### 查询包详情
+```typescript
+const result = await fetch('/mcp', {
+  method: 'POST',
+  body: JSON.stringify({
+    tool: 'searchNpmPackage',
+    parameters: { packageName: 'react' }
+  })
+});
 ```
 
-### Installing Manually
+### 搜索npm包
+```typescript
+const result = await fetch('/mcp', {
+  method: 'POST',
+  body: JSON.stringify({
+    tool: 'searchNpmPackages',
+    parameters: { query: 'http client' }
+  })
+});
+```
+
+### 实时通信(SSE)
+```javascript
+const eventSource = new EventSource('/sse');
+eventSource.onmessage = (event) => {
+  console.log('收到数据:', JSON.parse(event.data));
+};
+```
+
+## 部署到Cloudflare
+
+1. 安装依赖
 ```bash
 npm install
 ```
 
-## Build
-
+2. 构建项目
 ```bash
 npm run build
 ```
 
-## Running
-
+3. 发布Worker
 ```bash
-npm start
+npx wrangler deploy
 ```
 
-For development:
+## 自定义域名配置
 
-```bash
-npm run dev
-```
+### 1. Cloudflare控制台配置
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)
+2. 选择对应域名的DNS管理页面
+3. 添加CNAME记录：
+   - 名称: `npm.mcp` (或你选择的子域名)
+   - 目标: `<worker-name>.<account-subdomain>.workers.dev`
+   - 代理状态: 橙色云朵(已代理)
 
-## Usage
-
-The server exposes two main functionalities:
-
-### 1. searchNpmPackage Tool
-
-Fetches detailed information about a specific npm package. The tool returns comprehensive package information including:
-
-- Package name
-- Latest version
-- Description
-- Author information
-- Homepage URL
-- Repository URL
-- Dependencies list
-
-Example usage:
-
-```typescript
-const result = await server.tools.searchNpmPackage({ packageName: "react" });
-```
-
-Example response:
-
+### 2. Worker自定义域配置
+在 `wrangler.jsonc` 中添加路由配置：
 ```json
 {
-  "name": "react",
-  "version": "18.2.0",
-  "description": "React is a JavaScript library for building user interfaces.",
-  "author": "Meta Open Source",
-  "homepage": "https://reactjs.org/",
-  "repository": {
-    "url": "https://github.com/facebook/react.git"
-  },
-  "dependencies": {
-    "loose-envify": "^1.1.0"
-  }
+  "routes": [
+    {
+      "pattern": "npm.mcp.yourdomain.com",
+      "custom_domain": true
+    }
+  ]
 }
 ```
 
-### 2. popular-packages Resource
-
-Lists the 10 most popular npm packages, sorted by popularity. Each package in the list includes:
-
-- Package name
-- Description
-- Current version
-
-Resource URI: `npm://popular`
-
-Example response:
-
-```json
-[
-  {
-    "name": "lodash",
-    "description": "Lodash modular utilities",
-    "version": "4.17.21"
-  },
-  // ... more packages
-]
+### 3. 重新部署
+```bash
+wrangler deploy
 ```
 
-## Integration with AI Models
+### 4. 验证域名
+访问 `https://npm.mcp.yourdomain.com/mcp` 测试是否正常工作
 
-This MCP server can be integrated with AI models to:
+## 开发模式
 
-1. Get package information before installation
-2. Compare different package versions
-3. Analyze dependencies
-4. Find popular alternatives
-5. Get quick package summaries
+```bash
+wrangler dev
+```
 
-## Technologies
+## 技术栈
 
+- Cloudflare Workers
 - TypeScript
-- Model Context Protocol SDK
-- Node-fetch
-- Zod
+- Model Context Protocol
+- Server-Sent Events(SSE)
