@@ -10,6 +10,14 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
+	"preview_urls": false,
+	"routes": [
+		{
+			"pattern": "npm.mcp.sereniblue.com",
+			"custom_domain": true
+			
+		}
+	],
 	"migrations": [
 		{
 			"new_sqlite_classes": [
