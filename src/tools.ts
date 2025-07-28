@@ -11,14 +11,14 @@ interface NpmPackage {
 }
 
 export async function searchNpmPackage(packageName: string) {
-  console.log('开始查询npm包:', packageName);
+
   try {
     const response = await fetch(`https://registry.npmjs.org/${packageName}`);
-    console.log('获取到响应，状态码:', response.status);
+
     const data = (await response.json()) as NpmPackage;
     
     if (response.ok) {
-      console.log('成功获取包信息:', packageName);
+
       return {
         name: data.name,
         version: data["dist-tags"].latest,
@@ -29,11 +29,11 @@ export async function searchNpmPackage(packageName: string) {
         dependencies: data.versions[data["dist-tags"].latest].dependencies
       };
     } else {
-      console.error('包查询失败:', packageName, '状态码:', response.status);
+      throw new Error(`Package '${packageName}' not found`);
       throw new Error(`Package '${packageName}' not found`);
     }
   } catch (error: unknown) {
-    console.error('查询npm包时发生错误:', packageName, error);
+    throw error instanceof Error ? error : new Error('Unknown error');
     throw error instanceof Error ? error : new Error('Unknown error');
   }
 }
@@ -89,21 +89,21 @@ interface NpmSearchResult {
 }
 
 export async function searchNpmPackages(query: string): Promise<NpmSearchResult> {
-  console.log('开始搜索npm包:', query);
+
   try {
     const response = await fetch(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(query)}`);
-    console.log('搜索响应状态:', response.status);
+
     const data = await response.json();
     
     if (response.ok) {
-      console.log('搜索成功:', query, '结果数量:', data.objects?.length || 0);
+
       return data as NpmSearchResult;
     } else {
-      console.error('搜索请求失败:', query, '状态码:', response.status);
+      throw new Error(`Search for '${query}' failed`);
       throw new Error(`Search for '${query}' failed`);
     }
   } catch (error: unknown) {
-    console.error('搜索npm包时发生错误:', query, error);
+    throw error instanceof Error ? error : new Error('Unknown error');
     throw error instanceof Error ? error : new Error('Unknown error');
   }
 }
