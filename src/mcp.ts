@@ -1,6 +1,7 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { searchNpmPackage, searchNpmPackages } from "./tools";
 
 interface NpmPackage {
   name: string;
@@ -37,35 +38,13 @@ export class MyMCP extends McpAgent {
 			{ packageName: z.string() },
 			async ({ packageName }) => {
 				try {
-					const response = await fetch(`https://registry.npmjs.org/${packageName}`);
-					const data = (await response.json()) as NpmPackage;
-					
-					if (response.ok) {
-						const result = {
-							name: data.name,
-							version: data["dist-tags"].latest,
-							description: data.description,
-							author: typeof data.author === 'string' ? data.author : data.author?.name,
-							homepage: data.homepage,
-							repository: data.repository?.url,
-							dependencies: data.versions[data["dist-tags"].latest].dependencies
-						};
-
-						return {
-							content: [{
-								type: "text",
-								text: JSON.stringify(result, null, 2)
-							}]
-						};
-					} else {
-						const errorMsg = `Erro: Pacote '${packageName}' não encontrado`;
-						return {
-							content: [{
-								type: "text",
-								text: errorMsg
-							}]
-						};
-					}
+					const result = await searchNpmPackage(packageName);
+					return {
+						content: [{
+							type: "text",
+							text: JSON.stringify(result)
+						}]
+					};
 				} catch (error: unknown) {
 					const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
 					const errorMsg = `Erro ao buscar informações do pacote: ${errorMessage}`;
@@ -73,6 +52,36 @@ export class MyMCP extends McpAgent {
 						content: [{
 							type: "text",
 							text: errorMsg
+						}]
+					};
+				}
+			}
+		);
+
+		// NPM package search by query tool
+		this.server.tool(
+			"searchNpmPackages",
+			`搜索npm包工具，输入查询字符串可获取相关包的名称、描述、版本等信息。`,
+			{ query: z.string() },
+			async ({ query }) => {
+				try {
+					const result = await searchNpmPackages(query);
+					return {
+						content: [{
+							type: "text",
+							text: JSON.stringify(result.objects.map(obj => ({
+								name: obj.package.name,
+								description: obj.package.description,
+								version: obj.package.version
+							})))
+						}]
+					};
+				} catch (error: unknown) {
+					const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+					return {
+						content: [{
+							type: "text",
+							text: `Error searching packages: ${errorMessage}`
 						}]
 					};
 				}
