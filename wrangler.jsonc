@@ -7,22 +7,17 @@
 	"name": "codebox-mcp-cloudflare",
 	"main": "src/cf.ts",
 	"compatibility_date": "2025-03-10",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
+	"compatibility_flags": ["nodejs_compat"],
 	"preview_urls": false,
 	"routes": [
 		{
 			"pattern": "npm.mcp.sereniblue.com",
 			"custom_domain": true
-			
 		}
 	],
 	"migrations": [
 		{
-			"new_sqlite_classes": [
-				"MyMCP"
-			],
+			"new_sqlite_classes": ["MyMCP"],
 			"tag": "v1"
 		}
 	],

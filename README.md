@@ -7,8 +7,10 @@
 ## 核心功能
 
 1. **包详情查询**：通过包名获取npm包详细信息
-2. **包搜索**：通过关键词搜索npm包
-3. **实时通信**：支持SSE协议实时推送数据
+2. **包搜索**：通过关键词搜索npm包，支持多种排序选项
+3. **下载统计**：获取npm包的下载统计信息
+4. **实时通信**：支持SSE协议实时推送数据
+5. **缓存机制**：内置缓存机制，提高响应速度
 
 ## 路由端点
 
@@ -35,6 +37,36 @@ const result = await fetch('/mcp', {
   body: JSON.stringify({
     tool: 'searchNpmPackages',
     parameters: { query: 'http client' }
+  })
+});
+```
+
+### 搜索npm包（带选项）
+```typescript
+const result = await fetch('/mcp', {
+  method: 'POST',
+  body: JSON.stringify({
+    tool: 'searchNpmPackages',
+    parameters: {
+      query: 'http client',
+      size: 20,
+      sortBy: 'downloads',
+      popularity: 1.0
+    }
+  })
+});
+```
+
+### 获取包下载统计
+```typescript
+const result = await fetch('/mcp', {
+  method: 'POST',
+  body: JSON.stringify({
+    tool: 'getDownloadStats',
+    parameters: {
+      packageName: 'react',
+      period: 'last-month'
+    }
   })
 });
 ```
@@ -107,3 +139,9 @@ wrangler dev
 - TypeScript
 - Model Context Protocol
 - Server-Sent Events(SSE)
+
+## 性能优化
+
+- **缓存机制**：内置5分钟缓存，减少对npm registry的重复请求
+- **错误处理**：提供详细的错误信息和日志记录
+- **速率限制**：智能处理npm registry的速率限制

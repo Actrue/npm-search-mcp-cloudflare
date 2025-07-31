@@ -1,6 +1,6 @@
 import { MyMCP } from "./mcp";
 
-export {MyMCP}
+export { MyMCP };
 export default {
 	fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		const url = new URL(request.url);
