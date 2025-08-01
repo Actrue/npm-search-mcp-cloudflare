@@ -172,7 +172,7 @@ export async function searchNpmPackages(query: string, options?: SearchOptions):
 			// 根据不同的HTTP状态码提供更具体的错误信息
 			switch (response.status) {
 				case 400:
-					throw new Error(`Invalid search parameters for query '${query}'`);
+					throw new Error(`Search for '${query}' failed`);
 				case 429:
 					throw new Error(`Rate limit exceeded when searching for '${query}'`);
 				case 500:
@@ -217,7 +217,7 @@ export async function getDownloadStats(packageName: string, period: 'last-day' |
 			// 根据不同的HTTP状态码提供更具体的错误信息
 			switch (response.status) {
 				case 404:
-					throw new Error(`Package '${packageName}' not found when fetching download stats`);
+					throw new Error(`Failed to fetch download stats for '${packageName}'`);
 				case 429:
 					throw new Error(`Rate limit exceeded when fetching download stats for '${packageName}'`);
 				case 500:
